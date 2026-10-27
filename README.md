@@ -1,17 +1,38 @@
 # Neon Rush
 
-A browser-based, three-lane arcade racing game built with Django, HTML, CSS, and
-JavaScript. Dodge traffic, collect coins, avoid oil slicks, and save your best
-runs to the leaderboard.
+Neon Rush is a responsive Django driving game with a browser-based 3D arcade
+mode, a 2D fallback, player accounts, a vehicle garage, upgrades, FAQs, and a
+support assistant.
 
-## Requirements
+- **Live site:** <https://santhosh-app-z0hg.onrender.com/>
+- **GitHub:** <https://github.com/santhoshparthasarathy304-cmd/santhosh-app>
 
-- Python 3.10 or later
-- Dependencies from `requirements.txt`
+## Features
+
+- Procedural Three.js driving scene with traffic, road markings, buildings,
+  lighting, camera options, keyboard controls, and mobile touch controls.
+- Existing 2D game remains available as a fallback if WebGL or the Three.js
+  CDN is unavailable. The 3D scene is an arcade game, not a simulator.
+- Account signup/login and a garage with purchasable cars, selectable vehicles,
+  once-per-day credits, and tires, engine, braking, and lighting upgrades.
+  Purchases are checked and recorded by Django; request IDs prevent duplicate
+  charges on retries.
+- Upgrades feed into vehicle specifications used by the game. Player balances,
+  ownership, upgrades, transactions, and scores are stored in SQL.
+- At least 10 SQL-backed FAQs, an assistant widget across the site, a documented
+  error guide (`400`, `401`, `403`, `404`, `429`, `500`, `503`, and `NR-100`),
+  and custom 400/403/404/500 pages with an **Ask the Assistant** option.
+- The assistant uses FAQ/error guidance, can call Gemini when configured, and
+  creates a support ticket for unanswered questions. Chat and feedback are
+  stored in SQL and mirrored to MongoDB when configured.
+- Request logging and a SQL-backed `/healthz/` endpoint.
+- Optional location-based road weather from Open-Meteo. The browser asks for
+  location permission only after the player selects the weather control; the
+  endpoint has a timeout and a fallback.
 
 ## Run locally
 
-From the project directory:
+Use Python 3.12 or later and install `requirements.txt`:
 
 ```powershell
 python -m venv .venv
@@ -21,9 +42,8 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-Open <http://127.0.0.1:8000/> and choose **Start your engine**.
-
-## Tests
+Open <http://127.0.0.1:8000/>. The game uses SQLite locally by default. Run the
+tests with:
 
 ```powershell
 python manage.py test game
@@ -31,105 +51,54 @@ python manage.py test game
 
 ## Configuration
 
-The local development settings work without environment variables. Before
-deploying to a hosting provider, configure:
+Set environment variables in the hosting provider's secret/configuration
+interface, not in source files or the browser:
 
-- `DJANGO_SECRET_KEY`: a unique, private Django secret key.
-- `DJANGO_DEBUG`: set to `False`.
-- `DJANGO_ALLOWED_HOSTS`: comma-separated host names for the deployment.
-- `DATABASE_URL`: optional PostgreSQL connection URL. When set, Django uses
-  PostgreSQL over SSL; without it, local development uses SQLite.
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `DJANGO_SECRET_KEY` | Production | Private Django signing key |
+| `DJANGO_DEBUG` | Production | Set to `False` |
+| `DJANGO_ALLOWED_HOSTS` | Production | Comma-separated host names |
+| `DATABASE_URL` | Production persistence | PostgreSQL pooled connection URL; without it, SQLite is used |
+| `DIRECT_DATABASE_URL` | PostgreSQL migrations | Direct connection URL used by the Render start command |
+| `GEMINI_API_KEY` | Optional | Enables Gemini answers; remains server-side |
+| `GEMINI_MODEL` | Optional | Gemini model name |
+| `MONGODB_URI` | Optional | Enables MongoDB mirroring for chat and feedback |
+| `MONGODB_DATABASE` | Optional | MongoDB database name (defaults to `neon_rush`) |
 
-The SQLite database, database backups, and environment files are intentionally
-excluded from Git. Run `python manage.py migrate` to create a fresh local
-database.
+If Gemini is not configured, FAQ/error answers and ticket creation remain
+available. Without `MONGODB_URI`, chat and feedback are still stored in SQL.
+No API keys or database credentials belong in GitHub.
 
-## Deploy on Render
+## Render deployment and persistence
 
-The existing Render service uses a free web instance and deploys this Django
-project from GitHub. Its local SQLite file is ephemeral and can be lost when
-the service restarts.
+The existing free Render web service deploys this repository's `main` branch.
+Its filesystem is ephemeral; SQLite data can be lost when the service
+restarts. Configure a managed PostgreSQL URL before relying on player accounts,
+balances, purchases, or scores to survive a restart.
 
-Render's free PostgreSQL databases are also temporary: they expire after 30
-days and are deleted after a further 14-day recovery window. Do not use one for
-persistent player data.
+The app supports PostgreSQL and the project has already been prepared for
+pooled/direct PostgreSQL URLs. A free Neon plan is one option, but availability
+and limits can change; choose a $0 plan and review its terms before creating a
+database. Do not enable a paid service without approval. In Render, set
+`DATABASE_URL` to the pooled URL and `DIRECT_DATABASE_URL` to the direct URL.
+The start command should be:
 
-### Optional free PostgreSQL on Neon
-
-Neon's current Free plan is permanent, requires no credit card, and includes
-up to 1 GB of storage per project. Compute automatically scales to zero after
-inactivity, so the first connection can take a few seconds. The free plan has
-a six-hour history window and one manual snapshot; it does not include
-scheduled snapshots. Keep independent backups for important data. Supabase
-Free is another $0 option, but projects can pause after a week of low activity
-and downloadable database backups are not included.
-
-Neon provides separate direct and pooled connection strings. The web service
-uses the pooled URL; Django migrations use the direct URL because Neon's pooler
-runs in transaction mode.
-
-To migrate the existing local scores to Neon without committing credentials
-or SQLite files:
-
-1. Keep the verified SQLite backup at
-   `backups\db-pre-postgres-20261027.sqlite3`. The `backups\` folder is
-   excluded from Git.
-2. Create a Neon project on its **Free** plan; do not select a paid plan. Copy
-   both the direct and pooled PostgreSQL connection strings. Never put either
-   URL in source code.
-3. Before changing the Render service, export the local score rows:
-
-   ```powershell
-   python manage.py dumpdata game.GameScore --indent 2 --output backups\game-scores.json
-   ```
-
-4. In Render, open the existing `santhosh-app` web service and add
-   `DATABASE_URL` with the pooled URL and `DIRECT_DATABASE_URL` with the direct
-   URL. Set the service's **Start Command** to
-   `DATABASE_URL="${DIRECT_DATABASE_URL:-$DATABASE_URL}" python manage.py migrate --noinput && gunicorn myproject.wsgi:application`.
-   Save to trigger a deploy. This runs migrations with the direct URL, then
-   starts Gunicorn with the pooled URL.
-5. In a local PowerShell window, use the direct URL for a one-time schema
-   creation and data import:
-
-   ```powershell
-   $secureUrl = Read-Host "Paste the Neon direct connection URL" -AsSecureString
-   $env:DATABASE_URL = [System.Net.NetworkCredential]::new("", $secureUrl).Password
-   try {
-       python manage.py migrate
-       if ($LASTEXITCODE -ne 0) { throw "Database migration failed." }
-       python manage.py loaddata backups\game-scores.json
-       if ($LASTEXITCODE -ne 0) { throw "Score import failed." }
-   } finally {
-       Remove-Item Env:\DATABASE_URL -ErrorAction SilentlyContinue
-   }
-   ```
-
-   The URL prompt is masked, and the environment variable is cleared even if a
-   command fails. Run `loaddata` only once; it is not an upsert operation.
-6. Check the game and leaderboard on the live site. Keep the SQLite backup
-   until the new database and imported row count have been verified.
-
-The local SQLite file and Render's current SQLite file are separate databases.
-The commands above export the local file only. Before switching the Render
-service, preserve all production-only leaderboard entries as well. At the time
-of this audit, the live leaderboard displayed two `Racer` entries (707 m, 7
-coins, 770 points; and 901 m, 6 coins, 690 points). These are only the known
-public entries, not a complete production export: the public leaderboard does
-not expose original timestamps or guarantee every historical row. Re-check
-the live data immediately before cutover, account for every production-only
-row, and do not treat the sample entries below as a full backup. Add these
-sample rows only if they are still missing after that check:
-
-```powershell
-python manage.py shell -c "from game.models import GameScore; GameScore.objects.create(player_name='Racer', distance=707, coins=7, score=770); GameScore.objects.create(player_name='Racer', distance=901, coins=6, score=690)"
+```text
+DATABASE_URL="${DIRECT_DATABASE_URL:-$DATABASE_URL}" python manage.py migrate --noinput && gunicorn myproject.wsgi:application
 ```
 
-The current game has no registered users, owned-car, upgrade, or currency
-records to migrate; those features and their models do not exist yet.
+This runs migrations using the direct URL and starts Gunicorn with the pooled
+URL. Set the optional Gemini and MongoDB variables in Render only when those
+services are provisioned. Neither external integration is required for the
+FAQ/ticket fallback.
 
-## Game controls
+The local SQLite backup contains 14 pre-upgrade game scores and is excluded
+from Git. It is not the Render database. Before any database cutover, inspect
+the current live leaderboard and preserve any production-only entries; local
+and production SQLite files cannot be assumed to contain the same rows.
 
-- Left/right arrows or **A**/**D**: steer
-- **P** or **Escape**: pause or resume
-- **Enter**: resume from a pit stop
+## Proposed future improvement
+
+Replace the procedural 3D car and scenery with properly licensed, optimized
+vehicle and environment assets while retaining the existing 2D fallback.

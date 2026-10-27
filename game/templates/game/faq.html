@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080d15">
+    <title>FAQ &amp; Support — Neon Rush</title>
+    <link rel="stylesheet" href="{% static 'game/css/style.css' %}">
+</head>
+<body class="page-home">
+    <main class="home-shell support-shell">
+        <nav class="topbar">
+            <a class="brand" href="{% url 'game:home' %}"><span class="brand-mark">NR</span><span>NEON<span class="brand-light">RUSH</span></span></a>
+            <div class="topbar-links"><a class="nav-link" href="{% url 'game:play' %}">Drive</a><a class="nav-link" href="{% url 'game:garage' %}">Garage</a><a class="nav-link" href="{% url 'game:error_guide' %}">Error guide</a></div>
+        </nav>
+        <section class="support-hero"><p class="eyebrow"><span class="live-dot"></span> ROADSIDe SUPPORT</p><h1>Answers for the<br><span>open road.</span></h1><p>These answers are stored in the game database. Ask the assistant if you need more help.</p></section>
+        <section class="faq-list" aria-label="Frequently asked questions">
+            {% for faq in faqs %}
+            <details class="faq-item">
+                <summary><span class="faq-category">{{ faq.category }}</span><strong>{{ faq.question }}</strong><span class="faq-toggle" aria-hidden="true">+</span></summary>
+                <p>{{ faq.answer }}</p>
+            </details>
+            {% empty %}
+            <p class="empty-state">The FAQ catalogue is not available yet. Ask the assistant for help.</p>
+            {% endfor %}
+        </section>
+        <footer class="site-footer"><span>NEON RUSH / ROADSIDE SUPPORT</span><a href="{% url 'game:home' %}">Back home →</a></footer>
+    </main>
+    {% include "game/_assistant_widget.html" %}
+</body>
+</html>

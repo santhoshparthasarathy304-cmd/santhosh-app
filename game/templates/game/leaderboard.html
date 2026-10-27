@@ -12,7 +12,11 @@
     <main class="home-shell leaderboard-shell">
         <nav class="topbar">
             <a class="brand" href="{% url 'game:home' %}"><span class="brand-mark">NR</span><span>NEON<span class="brand-light">RUSH</span></span></a>
-            <a class="nav-link" href="{% url 'game:home' %}"><span aria-hidden="true">←</span> Back home</a>
+            <div class="topbar-links">
+                <a class="nav-link" href="{% url 'game:faq' %}">FAQ</a>
+                {% if user.is_authenticated %}<a class="nav-link" href="{% url 'game:garage' %}">Garage</a>{% else %}<a class="nav-link" href="{% url 'game:signup' %}">Create account</a>{% endif %}
+                <a class="nav-link" href="{% url 'game:home' %}"><span aria-hidden="true">←</span> Home</a>
+            </div>
         </nav>
         <section class="leaderboard-hero"><p class="eyebrow"><span class="live-dot"></span> THE NIGHT SHIFT</p><h1>Legends of<br><span>the highway.</span></h1><p>Every run earns its place. Is yours next?</p></section>
         <section class="home-leaderboard leaderboard-table">
@@ -32,7 +36,8 @@
                 <div class="empty-state"><span class="empty-icon">✦</span><p>The road is wide open.</p><span>Make the first run and claim the top spot.</span></div>
             {% endif %}
         </section>
-        <footer class="site-footer"><span>NEON RUSH <span class="footer-separator">/</span> MADE FOR THE NIGHT DRIVE</span><a href="{% url 'game:home' %}">Back to garage <span aria-hidden="true">→</span></a></footer>
+        <footer class="site-footer"><span>NEON RUSH <span class="footer-separator">/</span> MADE FOR THE NIGHT DRIVE</span><a href="{% url 'game:home' %}">Back home <span aria-hidden="true">→</span></a></footer>
     </main>
+    {% include "game/_assistant_widget.html" %}
 </body>
 </html>

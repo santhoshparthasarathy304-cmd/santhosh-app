@@ -21,3 +21,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('game.urls')),
 ]
+
+handler400 = "game.views.bad_request"
+handler403 = "game.views.permission_denied"
+handler404 = "game.views.page_not_found"
+handler500 = "game.views.server_error"

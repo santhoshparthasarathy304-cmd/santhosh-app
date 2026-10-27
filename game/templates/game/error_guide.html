@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080d15">
+    <title>Error Guide — Neon Rush</title>
+    <link rel="stylesheet" href="{% static 'game/css/style.css' %}">
+</head>
+<body class="page-home">
+    <main class="home-shell support-shell">
+        <nav class="topbar"><a class="brand" href="{% url 'game:home' %}"><span class="brand-mark">NR</span><span>NEON<span class="brand-light">RUSH</span></span></a><a class="nav-link" href="{% url 'game:faq' %}">FAQs</a></nav>
+        <section class="support-hero"><p class="eyebrow">ROADSIDE TROUBLESHOOTING</p><h1>Read the<br><span>warning lights.</span></h1><p>Common HTTP responses and Neon Rush application errors.</p></section>
+        <section class="error-guide-list">
+            {% for code, description in error_guide.items %}
+            <article class="error-guide-card"><code>{{ code }}</code><p>{{ description }}</p></article>
+            {% endfor %}
+        </section>
+        <footer class="site-footer"><span>NEON RUSH / ROADSIDE SUPPORT</span><a href="{% url 'game:home' %}">Back home →</a></footer>
+    </main>
+    {% include "game/_assistant_widget.html" %}
+</body>
+</html>

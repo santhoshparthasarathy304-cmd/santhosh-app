@@ -1,0 +1,34 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080d15">
+    <title>{% if mode == "signup" %}Create account{% else %}Sign in{% endif %} — Neon Rush</title>
+    <link rel="stylesheet" href="{% static 'game/css/style.css' %}">
+</head>
+<body class="page-home">
+    <main class="home-shell account-shell">
+        <nav class="topbar">
+            <a class="brand" href="{% url 'game:home' %}"><span class="brand-mark">NR</span><span>NEON<span class="brand-light">RUSH</span></span></a>
+            <a class="nav-link" href="{% url 'game:home' %}">Back home</a>
+        </nav>
+        <section class="account-card">
+            <p class="eyebrow">{% if mode == "signup" %}YOUR GARAGE STARTS HERE{% else %}WELCOME BACK{% endif %}</p>
+            <h1>{% if mode == "signup" %}Create your<br><span>driver account.</span>{% else %}Back on the<br><span>open road.</span>{% endif %}</h1>
+            {% if mode == "signup" %}<p>Your account starts with 1,000 garage credits and the Street Compact.</p>{% endif %}
+            <form method="post" class="account-form">
+                {% csrf_token %}
+                {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
+                {{ form.as_p }}
+                <button class="button button-primary button-full" type="submit">{% if mode == "signup" %}Create account{% else %}Sign in{% endif %}<span aria-hidden="true">→</span></button>
+            </form>
+            <p class="account-switch">
+                {% if mode == "signup" %}Already registered? <a href="{% url 'game:login' %}">Sign in</a>{% else %}New to Neon Rush? <a href="{% url 'game:signup' %}">Create an account</a>{% endif %}
+            </p>
+        </section>
+    </main>
+    {% include "game/_assistant_widget.html" %}
+</body>
+</html>

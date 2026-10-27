@@ -1,0 +1,98 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080d15">
+    <title>Garage — Neon Rush</title>
+    <link rel="stylesheet" href="{% static 'game/css/style.css' %}">
+    <script type="module" src="{% static 'game/js/garage-preview-boot.js' %}"></script>
+    <script src="{% static 'game/js/garage.js' %}" defer></script>
+</head>
+<body class="page-home">
+    <main class="home-shell garage-shell"
+          id="garage"
+          data-profile-url="{% url 'game:profile_api' %}"
+          data-buy-url="{% url 'game:buy_vehicle' %}"
+          data-select-url="{% url 'game:select_vehicle' %}"
+          data-upgrade-url="{% url 'game:buy_upgrade' %}"
+          data-reward-url="{% url 'game:daily_reward' %}">
+        <nav class="topbar">
+            <a class="brand" href="{% url 'game:home' %}"><span class="brand-mark">NR</span><span>NEON<span class="brand-light">RUSH</span></span></a>
+            <div class="topbar-links">
+                <a class="nav-link" href="{% url 'game:play' %}">Drive</a>
+                <a class="nav-link" href="{% url 'game:faq' %}">FAQ</a>
+                <span class="nav-link">{{ user.username }}</span>
+                <form method="post" action="{% url 'game:logout' %}" class="inline-form">{% csrf_token %}<button class="nav-link nav-button" type="submit">Sign out</button></form>
+            </div>
+        </nav>
+        <section class="garage-hero">
+            <div><p class="eyebrow"><span class="live-dot"></span> YOUR DRIVER PROFILE</p><h1>Build your<br><span>night machine.</span></h1><p>Vehicles, credit balance, and upgrades are saved to your account.</p></div>
+            <div class="balance-card"><span>GARAGE CREDITS</span><strong id="garage-balance">{{ profile.balance }}</strong><button class="button button-secondary" id="daily-reward" type="button">Claim daily +50</button><small id="garage-status" role="status">One reward per account per day.</small></div>
+        </section>
+
+        <section class="garage-preview-panel" aria-label="Interactive three-dimensional car preview">
+            <div class="garage-preview-heading"><div><p class="eyebrow">YOUR CURRENT RIDE</p><h2>{{ profile.selected_vehicle.name }}</h2></div><span>DRAG TO ROTATE</span></div>
+            <canvas id="garage-car-preview" width="960" height="420" data-paint="{{ selected_paint }}" data-lights="{{ selected_lights_level }}" aria-label="Rotatable three-dimensional preview of your selected car"></canvas>
+            <p class="garage-preview-status" id="garage-preview-status" role="status">Loading the 3D garage preview…</p>
+        </section>
+
+        <section class="garage-section">
+            <div class="section-heading"><div><p class="eyebrow">YOUR COLLECTION</p><h2>Choose your ride</h2></div></div>
+            <div class="vehicle-grid">
+                {% for item in catalog %}
+                <article class="vehicle-card{% if item.vehicle.slug == selected_slug %} is-selected{% endif %}"
+                         data-vehicle-card="{{ item.vehicle.slug }}"
+                         data-vehicle="{{ item.vehicle.slug }}"
+                         data-paint="{{ item.vehicle.paint }}"
+                         data-acceleration="{{ item.specs.acceleration }}"
+                         data-top-speed="{{ item.specs.top_speed }}"
+                         data-grip="{{ item.specs.grip }}"
+                         data-braking="{{ item.specs.braking }}"
+                         data-lights="{{ item.specs.lights_level }}">
+                    <div class="vehicle-showcase" style="--vehicle-paint: {{ item.vehicle.paint }}">
+                        <span class="showcase-label">{% if item.ownership %}{% if item.vehicle.slug == selected_slug %}CURRENT RIDE{% else %}OWNED{% endif %}{% else %}LOCKED · {{ item.vehicle.price }} CREDITS{% endif %}</span>
+                        <div class="showcase-car" aria-hidden="true"><span class="showcase-glass"></span><span class="showcase-light showcase-light-left"></span><span class="showcase-light showcase-light-right"></span></div>
+                        <span class="showcase-ground"></span>
+                    </div>
+                    <div class="vehicle-card-content">
+                        <div class="vehicle-title"><div><p class="eyebrow">NEON RUSH · ROAD SERIES</p><h3>{{ item.vehicle.name }}</h3></div><strong>{% if item.vehicle.price == 0 %}STARTER{% else %}{{ item.vehicle.price }} ✦{% endif %}</strong></div>
+                        <div class="vehicle-specs">
+                            <span>ACCEL <strong>{{ item.specs.acceleration }}</strong></span>
+                            <span>TOP SPEED <strong>{{ item.specs.top_speed }} km/h</strong></span>
+                            <span>GRIP <strong>{{ item.specs.grip }}</strong></span>
+                            <span>BRAKES <strong>{{ item.specs.braking }}</strong></span>
+                            <span>LIGHTS <strong>LV {{ item.specs.lights_level }}</strong></span>
+                        </div>
+                        {% if item.ownership %}
+                            {% if item.vehicle.slug == selected_slug %}<button class="button button-secondary vehicle-action" disabled>Currently selected</button>{% else %}<button class="button button-secondary vehicle-action" data-select="{{ item.vehicle.slug }}" type="button">Select this car</button>{% endif %}
+                        {% else %}
+                            <button class="button button-primary vehicle-action" data-buy="{{ item.vehicle.slug }}" type="button">Purchase for {{ item.vehicle.price }} credits</button>
+                        {% endif %}
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="garage-section upgrade-section">
+            <div class="section-heading"><div><p class="eyebrow">CURRENT RIDE · {{ profile.selected_vehicle.name }}</p><h2>Performance upgrades</h2></div></div>
+            <p class="garage-hint">Upgrades apply to the selected car and change its stored specifications. Prices and levels are checked by the server.</p>
+            <div class="upgrade-grid">
+                {% for item in upgrade_cards %}
+                <article class="upgrade-card">
+                    <div><span class="upgrade-icon">{% if item.key == "tires" %}◎{% elif item.key == "lights" %}✦{% elif item.key == "engine" %}ϟ{% elif item.key == "top_speed" %}↗{% else %}◉{% endif %}</span><div><h3>{{ item.name }}</h3><p>{{ item.effect }}</p></div></div>
+                    <div class="upgrade-meta"><span>LEVEL <strong data-upgrade-level="{{ item.key }}">{{ item.level }}/{{ item.max_level }}</strong></span><strong>{{ item.price }} ✦</strong></div>
+                    <button class="button button-secondary upgrade-action" data-upgrade="{{ item.key }}" data-vehicle="{{ selected_slug }}" type="button" {% if item.level >= item.max_level %}disabled{% endif %}>{% if item.level >= item.max_level %}MAX LEVEL{% else %}Install upgrade{% endif %}</button>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+        <div class="garage-notice" id="garage-notice" role="status" hidden></div>
+        <footer class="site-footer"><span>NEON RUSH <span class="footer-separator">/</span> THE NIGHT SHIFT</span><a href="{% url 'game:play' %}">Start driving <span aria-hidden="true">→</span></a></footer>
+        <form class="csrf-source" aria-hidden="true">{% csrf_token %}</form>
+    </main>
+    {% include "game/_assistant_widget.html" %}
+</body>
+</html>

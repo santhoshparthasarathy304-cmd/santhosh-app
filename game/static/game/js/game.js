@@ -7,6 +7,20 @@
     const scoreUrl = board.closest(".game-shell").dataset.scoreUrl;
     const canvas = document.getElementById("race-canvas");
     const ctx = canvas.getContext("2d");
+    const configElement = document.getElementById("game-config");
+    const gameConfig = configElement ? JSON.parse(configElement.textContent || "{}") : {};
+    const carSpecs = gameConfig.specs || {};
+    const playerPaint = /^#[0-9a-f]{6}$/i.test(carSpecs.paint || "")
+        ? carSpecs.paint
+        : "#51f2dc";
+    const maxSpeed = Number(carSpecs.top_speed) || 260;
+    const accelerationRate = 2.7 * ((Number(carSpecs.acceleration) || 6) / 6);
+    const grip = Math.max(0.5, Number(carSpecs.grip) || 1);
+    const brakeStrength = Math.max(0.5, Number(carSpecs.braking) || 1);
+    const lightsLevel = Math.max(0, Number(carSpecs.lights_level) || 0);
+    const loadingScreen = document.getElementById("loading-screen");
+    const loadingProgress = document.getElementById("loading-progress");
+    const loadingMessage = document.getElementById("loading-message");
     const laneCenters = [144, 240, 336];
     const road = { left: 82, right: 398, top: 0, bottom: canvas.height };
     const player = { lane: 1, x: laneCenters[1], y: 604, width: 48, height: 88, angle: 0 };
@@ -35,6 +49,7 @@
         audioContext: null,
         submitted: false,
         hazards: [],
+        braking: false,
     };
 
     const startOverlay = document.getElementById("start-overlay");
@@ -113,6 +128,7 @@
         state.coins = 0;
         state.score = 0;
         state.speed = 110;
+        state.braking = false;
         state.elapsed = 0;
         state.roadOffset = 0;
         state.hazardTimer = 4;
@@ -278,7 +294,12 @@
     function update(dt) {
         if (state.mode !== "running") return;
         state.elapsed += dt;
-        state.speed = Math.min(260, 110 + state.elapsed * 2.7);
+        const cruisingSpeed = Math.min(maxSpeed, 110 + state.elapsed * accelerationRate);
+        if (state.braking) {
+            state.speed = Math.max(0, state.speed - 150 * brakeStrength * dt);
+        } else {
+            state.speed = Math.min(cruisingSpeed, state.speed + 60 * (accelerationRate / 2.7) * dt);
+        }
         const roadSpeed = state.speed * 2.1;
         state.distance += (state.speed / 3.6) * dt;
         state.roadOffset = (state.roadOffset + roadSpeed * dt) % 64;
@@ -289,7 +310,7 @@
             hideRoadWarning();
         }
         const targetX = laneCenters[player.lane];
-        const steeringGrip = state.skidTimer > 0 ? 4 : 13;
+        const steeringGrip = state.skidTimer > 0 ? 4 * grip : 13 * grip;
         player.x += (targetX - player.x) * Math.min(1, dt * steeringGrip);
         player.x += state.skidVelocity * dt;
         state.skidVelocity *= Math.exp(-dt * (state.skidTimer > 0 ? 1.1 : 7));
@@ -436,9 +457,9 @@
         ctx.fill();
 
         const body = ctx.createLinearGradient(x, 0, x + car.width, 0);
-        body.addColorStop(0, isPlayer ? "#138c84" : shadeColor(car.color, -36));
-        body.addColorStop(0.5, isPlayer ? "#51f2dc" : car.color);
-        body.addColorStop(1, isPlayer ? "#167a78" : shadeColor(car.color, -45));
+        body.addColorStop(0, isPlayer ? shadeColor(playerPaint, -36) : shadeColor(car.color, -36));
+        body.addColorStop(0.5, isPlayer ? playerPaint : car.color);
+        body.addColorStop(1, isPlayer ? shadeColor(playerPaint, -45) : shadeColor(car.color, -45));
         roundedRect(x, y, car.width, car.height, 12);
         ctx.fillStyle = body;
         ctx.fill();
@@ -461,6 +482,12 @@
         roundedRect(x + 6, y + car.height - 11, 11, 4, 2);
         ctx.fill();
         roundedRect(x + car.width - 17, y + car.height - 11, 11, 4, 2);
+        ctx.fill();
+        roundedRect(x + 7, y + 5, 11, 5, 2);
+        roundedRect(x + car.width - 18, y + 5, 11, 5, 2);
+        ctx.fillStyle = "#fff2c4";
+        ctx.shadowColor = isPlayer && lightsLevel ? "#ffe8a6" : "transparent";
+        ctx.shadowBlur = isPlayer ? 5 + lightsLevel * 5 : 0;
         ctx.fill();
         ctx.restore();
     }
@@ -555,6 +582,20 @@
             event.preventDefault();
             setLane(Number(button.dataset.steer));
         });
+        document.querySelectorAll("[data-brake]").forEach((button) => {
+            const setBraking = (braking) => {
+                state.braking = braking;
+                button.classList.toggle("is-active", braking);
+            };
+            button.addEventListener("pointerdown", (event) => {
+                event.preventDefault();
+                setBraking(true);
+                button.setPointerCapture(event.pointerId);
+            });
+            button.addEventListener("pointerup", () => setBraking(false));
+            button.addEventListener("pointercancel", () => setBraking(false));
+            button.addEventListener("lostpointercapture", () => setBraking(false));
+        });
     });
     document.getElementById("sound-toggle").addEventListener("click", (event) => {
         state.soundEnabled = !state.soundEnabled;
@@ -567,7 +608,10 @@
     });
     document.addEventListener("keydown", (event) => {
         if (event.altKey || event.ctrlKey || event.metaKey) return;
-        if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") {
+        if (event.key === "ArrowDown" || event.key.toLowerCase() === "s" || event.code === "Space") {
+            event.preventDefault();
+            state.braking = true;
+        } else if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") {
             event.preventDefault();
             setLane(-1);
         } else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") {
@@ -580,10 +624,22 @@
             resumeGame();
         }
     });
+    document.addEventListener("keyup", (event) => {
+        if (event.key === "ArrowDown" || event.key.toLowerCase() === "s" || event.code === "Space") {
+            state.braking = false;
+        }
+    });
 
     updateHud();
+    if (loadingProgress) loadingProgress.style.width = "66%";
+    if (loadingMessage) loadingMessage.textContent = "Warming up the engine…";
     window.requestAnimationFrame((time) => {
         state.lastTime = time;
         frame(time);
+        if (loadingProgress) loadingProgress.style.width = "100%";
+        if (loadingMessage) loadingMessage.textContent = "Road ready";
+        if (loadingScreen) {
+            window.setTimeout(() => loadingScreen.classList.add("is-ready"), 180);
+        }
     });
 })();

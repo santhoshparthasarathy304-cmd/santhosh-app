@@ -1,0 +1,25 @@
+{% load static %}
+<aside class="assistant-dock"
+       data-chat-url="{% url 'game:assistant_chat' %}"
+       data-feedback-url="{% url 'game:assistant_feedback' %}">
+    <button class="assistant-launch" type="button" aria-expanded="false" aria-controls="assistant-panel">
+        <span aria-hidden="true">✦</span> Ask the Assistant
+    </button>
+    <section class="assistant-panel" id="assistant-panel" hidden aria-label="Neon Rush support assistant">
+        <header class="assistant-panel-header">
+            <div><span class="assistant-status-dot"></span><strong>Roadside assistant</strong><small>Game guide and support</small></div>
+            <button class="assistant-close" type="button" aria-label="Close assistant">×</button>
+        </header>
+        <div class="assistant-messages" role="log" aria-live="polite">
+            <p class="assistant-bubble assistant-bubble-bot">Ask about controls, cars, upgrades, or an error code. If I can’t verify an answer, I’ll create a support ticket.</p>
+        </div>
+        <form class="assistant-form">
+            {% csrf_token %}
+            <label class="sr-only" for="assistant-question">Your question</label>
+            <input id="assistant-question" name="question" maxlength="500" required placeholder="Ask a question…" autocomplete="off">
+            <button type="submit" aria-label="Send question">→</button>
+        </form>
+        <p class="assistant-error" role="status" hidden></p>
+    </section>
+</aside>
+<script src="{% static 'game/js/assistant.js' %}" defer></script>
