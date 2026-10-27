@@ -4,8 +4,14 @@ Neon Rush is a responsive Django driving game with a browser-based 3D arcade
 mode, a 2D fallback, player accounts, a vehicle garage, upgrades, FAQs, and a
 support assistant.
 
-- **Live site:** <https://santhosh-app-z0hg.onrender.com/>
-- **GitHub:** <https://github.com/santhoshparthasarathy304-cmd/santhosh-app>
+## Play the deployed game
+
+[**Open Neon Rush**](https://santhosh-app-z0hg.onrender.com/)
+
+The website is hosted on Render. This GitHub repository contains the complete
+application source, setup instructions, and deployment configuration.
+
+**Repository:** <https://github.com/santhoshparthasarathy304-cmd/santhosh-app>
 
 ## Features
 
