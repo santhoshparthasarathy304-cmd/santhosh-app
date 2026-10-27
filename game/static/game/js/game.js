@@ -64,6 +64,15 @@
     const bestDisplay = document.getElementById("best-display");
     const roadWarning = document.getElementById("road-warning");
 
+    function setLoading(percent, message) {
+        if (loadingProgress) {
+            loadingProgress.style.width = `${percent}%`;
+            loadingProgress.setAttribute("aria-valuenow", String(percent));
+        }
+        if (loadingMessage) loadingMessage.textContent = message;
+        loadingScreen?.classList.remove("is-loading");
+    }
+
     function pulse(element) {
         element.classList.remove("is-updated");
         void element.offsetWidth;
@@ -631,13 +640,11 @@
     });
 
     updateHud();
-    if (loadingProgress) loadingProgress.style.width = "66%";
-    if (loadingMessage) loadingMessage.textContent = "Warming up the engine…";
+    setLoading(66, "Warming up the engine…");
     window.requestAnimationFrame((time) => {
         state.lastTime = time;
         frame(time);
-        if (loadingProgress) loadingProgress.style.width = "100%";
-        if (loadingMessage) loadingMessage.textContent = "Road ready";
+        setLoading(100, "Road ready");
         if (loadingScreen) {
             window.setTimeout(() => loadingScreen.classList.add("is-ready"), 180);
         }

@@ -323,7 +323,9 @@ export async function start3DGame(THREE) {
 
     const setLoading = (percent, message) => {
         if (loadingProgress) loadingProgress.style.width = `${percent}%`;
+        if (loadingProgress) loadingProgress.setAttribute("aria-valuenow", String(percent));
         if (loadingMessage) loadingMessage.textContent = message;
+        loading?.classList.remove("is-loading");
     };
     setLoading(35, "Building the road scene…");
 
