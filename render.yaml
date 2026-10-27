@@ -1,10 +1,10 @@
 services:
   - type: web
-    name: santhosh-neon-rush
+    name: santhosh-app
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --no-input
-    startCommand: python manage.py migrate --noinput && gunicorn myproject.wsgi:application
+    startCommand: DATABASE_URL="${DIRECT_DATABASE_URL:-$DATABASE_URL}" python manage.py migrate --noinput && gunicorn myproject.wsgi:application
     envVars:
       - key: PYTHON_VERSION
         value: 3.13.14
@@ -12,5 +12,7 @@ services:
         generateValue: true
       - key: DJANGO_DEBUG
         value: "False"
-      - key: DJANGO_ALLOWED_HOSTS
-        value: santhosh-neon-rush.onrender.com
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_DATABASE_URL
+        sync: false

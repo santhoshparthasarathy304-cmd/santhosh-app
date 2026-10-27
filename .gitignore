@@ -11,6 +11,7 @@ env/
 
 db.sqlite3
 db.sqlite3-journal
+backups/
 
 staticfiles/
 media/
