@@ -1,0 +1,79 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080d15">
+    <title>Race — Neon Rush</title>
+    <link rel="stylesheet" href="{% static 'game/css/style.css' %}">
+    <script src="{% static 'game/js/game.js' %}" defer></script>
+</head>
+<body class="page-game">
+    <main class="game-shell" data-score-url="{% url 'game:save_score' %}">
+        <header class="game-topbar">
+            <a class="brand" href="{% url 'game:home' %}"><span class="brand-mark">NR</span><span>NEON<span class="brand-light">RUSH</span></span></a>
+            <a class="nav-link" href="{% url 'game:home' %}"><span aria-hidden="true">←</span> Back to garage</a>
+        </header>
+
+        <section class="race-layout" aria-label="Racing game">
+            <div class="race-main">
+                <div class="race-heading"><div><p class="eyebrow"><span class="live-dot"></span> NIGHT RUN</p><h1>Stay in the <span>fast lane.</span></h1></div>
+                    <button class="icon-button" id="sound-toggle" type="button" aria-label="Toggle sound" title="Toggle sound">♪</button>
+                </div>
+                <div class="game-board" id="game-board">
+                    <div class="game-hud" aria-live="polite">
+                        <div class="hud-item hud-score"><span class="hud-label">SCORE</span><strong id="score-display">000000</strong></div>
+                        <div class="hud-item"><span class="hud-label">DISTANCE</span><strong><span id="distance-display">0</span><small>m</small></strong></div>
+                        <div class="hud-item hud-coins"><span class="hud-label">COINS</span><strong><span id="coins-display">00</span><small>✦</small></strong></div>
+                        <div class="hud-item"><span class="hud-label">SPEED</span><strong><span id="speed-display">0</span><small>km/h</small></strong></div>
+                        <div class="hud-item hud-best"><span class="hud-label">BEST</span><strong id="best-display">000000</strong></div>
+                    </div>
+                    <canvas id="race-canvas" width="480" height="720" aria-label="Three-lane highway. Use the arrow keys or A and D to move your car."></canvas>
+                    <div class="road-warning is-hidden" id="road-warning" role="status" aria-live="polite"></div>
+                    <div class="game-overlay" id="start-overlay">
+                        <div class="overlay-card">
+                            <span class="overlay-kicker">YOUR NIGHT. YOUR ROAD.</span>
+                            <h2>Ready to<br><span>race?</span></h2>
+                            <label class="field-label" for="player-name">DRIVER NAME</label>
+                            <input id="player-name" class="name-input" type="text" maxlength="20" autocomplete="nickname" placeholder="Enter your name" value="Racer">
+                            <button class="button button-primary button-full" id="start-button" type="button"><span>Start engine</span><span aria-hidden="true">→</span></button>
+                            <p class="overlay-hint">Steer with <span class="keycap">←</span> <span class="keycap">→</span> or <span class="keycap">A</span> <span class="keycap">D</span></p>
+                        </div>
+                    </div>
+                    <div class="game-overlay is-hidden" id="pause-overlay">
+                        <div class="overlay-card">
+                            <span class="overlay-kicker">TAKE A BREATHER</span><h2>Pit <span>stop.</span></h2>
+                            <p class="overlay-description">Your run is paused. The road will be right here.</p>
+                            <button class="button button-primary button-full" id="resume-button" type="button"><span>Back to the road</span><span aria-hidden="true">→</span></button>
+                            <a class="overlay-home-link" href="{% url 'game:home' %}">Return to garage</a>
+                        </div>
+                    </div>
+                    <div class="game-overlay is-hidden" id="gameover-overlay">
+                        <div class="overlay-card">
+                            <span class="overlay-kicker" id="result-kicker">RUN COMPLETE</span><h2>Nice <span>drive.</span></h2>
+                            <div class="result-grid"><div><span>FINAL SCORE</span><strong id="final-score">0</strong></div><div><span>DISTANCE</span><strong><span id="final-distance">0</span> m</strong></div><div><span>COINS</span><strong><span id="final-coins">0</span> ✦</strong></div></div>
+                            <p class="save-status" id="save-status" role="status">Saving your run…</p>
+                            <button class="button button-primary button-full" id="restart-button" type="button"><span>Race again</span><span aria-hidden="true">↻</span></button>
+                            <a class="overlay-home-link" href="{% url 'game:home' %}">Back to garage <span aria-hidden="true">→</span></a>
+                        </div>
+                    </div>
+                    <div class="crash-flash" id="crash-flash"></div>
+                </div>
+                <div class="mobile-controls" aria-label="Touch controls">
+                    <button class="touch-button" type="button" data-steer="-1" aria-label="Steer left"><span aria-hidden="true">←</span><small>LEFT</small></button>
+                    <button class="touch-button touch-pause" type="button" id="mobile-pause" aria-label="Pause game"><span aria-hidden="true">Ⅱ</span><small>PAUSE</small></button>
+                    <button class="touch-button" type="button" data-steer="1" aria-label="Steer right"><span aria-hidden="true">→</span><small>RIGHT</small></button>
+                </div>
+            </div>
+            <aside class="race-sidebar">
+                <section class="side-card"><p class="eyebrow">THE MISSION</p><h2>Drive it like<br>you mean it.</h2><p>Traffic gets faster the longer you stay out. Watch for oil slicks: they make your car slide, so steer against the drift.</p><div class="mission-rule"></div><div class="mission-stat"><span>COIN BONUS</span><strong>+100 <span>PTS</span></strong></div><div class="mission-stat"><span>DISTANCE BONUS</span><strong>+1 <span>PT / 10 m</span></strong></div></section>
+                <section class="side-card side-controls"><p class="eyebrow">CONTROLS</p><div><span>Steer</span><span class="keycap">←</span><span class="keycap">→</span><span class="control-or">or</span><span class="keycap">A</span><span class="keycap">D</span></div><div><span>Pause</span><span class="keycap">P</span></div><div><span>Resume</span><span class="keycap">Enter</span></div></section>
+                <a class="side-leaderboard" href="{% url 'game:leaderboard' %}"><span class="trophy-icon">✦</span><span><strong>See the leaderboard</strong><small>Think you can make the top 10?</small></span><span class="side-arrow" aria-hidden="true">→</span></a>
+            </aside>
+        </section>
+        <footer class="site-footer"><span>NEON RUSH <span class="footer-separator">/</span> NIGHT RUN</span><a href="{% url 'game:leaderboard' %}">View leaderboard <span aria-hidden="true">→</span></a></footer>
+        <form class="csrf-source" aria-hidden="true">{% csrf_token %}</form>
+    </main>
+</body>
+</html>

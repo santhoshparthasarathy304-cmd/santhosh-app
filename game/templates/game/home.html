@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080d15">
+    <title>Neon Rush — Highway Racing</title>
+    <link rel="stylesheet" href="{% static 'game/css/style.css' %}">
+</head>
+<body class="page-home">
+    <main class="home-shell">
+        <nav class="topbar">
+            <a class="brand" href="{% url 'game:home' %}" aria-label="Neon Rush home">
+                <span class="brand-mark">NR</span><span>NEON<span class="brand-light">RUSH</span></span>
+            </a>
+            <a class="nav-link" href="{% url 'game:leaderboard' %}">Leaderboard <span aria-hidden="true">↗</span></a>
+        </nav>
+
+        <section class="hero">
+            <div class="hero-copy">
+                <p class="eyebrow"><span class="live-dot"></span> ARCADE HIGHWAY · ENDLESS RUN</p>
+                <h1>OWN THE<br><span>OPEN ROAD.</span></h1>
+                <p class="hero-description">Dodge the traffic. Chase the glow. How far can you go before the highway takes you?</p>
+                <a class="button button-primary button-large" href="{% url 'game:play' %}">
+                    <span>Start your engine</span><span class="button-arrow" aria-hidden="true">→</span>
+                </a>
+                <div class="control-hint"><span class="keycap">←</span><span class="keycap">→</span> or <span class="keycap">A</span><span class="keycap">D</span> to steer <span class="hint-divider">·</span> <span class="keycap">P</span> to pause</div>
+            </div>
+            <div class="hero-art" aria-hidden="true">
+                <div class="art-glow"></div>
+                <div class="art-road">
+                    <span class="art-lane"></span><span class="art-lane"></span>
+                    <div class="art-car">
+                        <span class="art-window"></span><span class="art-light art-light-left"></span><span class="art-light art-light-right"></span>
+                    </div>
+                </div>
+                <span class="art-speed">SPEED<br><strong>∞</strong></span>
+                <span class="art-coordinate">35° 41' 22.2" N</span>
+            </div>
+        </section>
+
+        <section class="feature-strip" aria-label="Game features">
+            <article class="feature-card"><span class="feature-icon feature-cyan">01</span><div><h2>Three lanes. No limits.</h2><p>Find the gap and stay alive.</p></div></article>
+            <article class="feature-card"><span class="feature-icon feature-orange">02</span><div><h2>Collect the glow.</h2><p>Coins turn miles into points.</p></div></article>
+            <article class="feature-card"><span class="feature-icon feature-purple">03</span><div><h2>Race the leaderboard.</h2><p>Your best run lives forever.</p></div></article>
+        </section>
+
+        <section class="home-leaderboard">
+            <div class="section-heading"><div><p class="eyebrow">THE FASTEST SO FAR</p><h2>Top drivers</h2></div><a class="text-link" href="{% url 'game:leaderboard' %}">Full leaderboard <span aria-hidden="true">→</span></a></div>
+            {% if scores %}
+                <ol class="score-list">
+                    {% for entry in scores %}
+                    <li class="score-row"><span class="rank-number">{{ forloop.counter|stringformat:"02d" }}</span><span class="score-driver">{{ entry.player_name }}</span><span class="score-distance">{{ entry.distance }} m</span><strong class="score-value">{{ entry.score }}</strong></li>
+                    {% endfor %}
+                </ol>
+            {% else %}
+                <div class="empty-state"><span class="empty-icon">✦</span><p>No runs on the board yet.</p><span>Be the first to leave your mark.</span></div>
+            {% endif %}
+        </section>
+        <footer class="site-footer"><span>NEON RUSH <span class="footer-separator">/</span> MADE FOR THE NIGHT DRIVE</span><span>Built for the open road <span aria-hidden="true">✳</span></span></footer>
+    </main>
+</body>
+</html>

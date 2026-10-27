@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080d15">
+    <title>Leaderboard — Neon Rush</title>
+    <link rel="stylesheet" href="{% static 'game/css/style.css' %}">
+</head>
+<body class="page-home">
+    <main class="home-shell leaderboard-shell">
+        <nav class="topbar">
+            <a class="brand" href="{% url 'game:home' %}"><span class="brand-mark">NR</span><span>NEON<span class="brand-light">RUSH</span></span></a>
+            <a class="nav-link" href="{% url 'game:home' %}"><span aria-hidden="true">←</span> Back home</a>
+        </nav>
+        <section class="leaderboard-hero"><p class="eyebrow"><span class="live-dot"></span> THE NIGHT SHIFT</p><h1>Legends of<br><span>the highway.</span></h1><p>Every run earns its place. Is yours next?</p></section>
+        <section class="home-leaderboard leaderboard-table">
+            <div class="section-heading"><div><p class="eyebrow">THE TOP 10</p><h2>Fastest drivers</h2></div><a class="button button-primary" href="{% url 'game:play' %}"><span>Take the wheel</span><span aria-hidden="true">→</span></a></div>
+            {% if scores %}
+                <ol class="score-list">
+                    {% for entry in scores %}
+                    <li class="score-row leaderboard-row">
+                        <span class="rank-number">{% if forloop.counter == 1 %}✦{% else %}{{ forloop.counter|stringformat:"02d" }}{% endif %}</span>
+                        <span class="score-driver">{{ entry.player_name }}{% if forloop.counter == 1 %}<small class="champion-tag">ROAD LEGEND</small>{% endif %}</span>
+                        <span class="score-distance">{{ entry.distance }} m <small>· {{ entry.coins }} coins</small></span>
+                        <strong class="score-value">{{ entry.score }}</strong>
+                    </li>
+                    {% endfor %}
+                </ol>
+            {% else %}
+                <div class="empty-state"><span class="empty-icon">✦</span><p>The road is wide open.</p><span>Make the first run and claim the top spot.</span></div>
+            {% endif %}
+        </section>
+        <footer class="site-footer"><span>NEON RUSH <span class="footer-separator">/</span> MADE FOR THE NIGHT DRIVE</span><a href="{% url 'game:home' %}">Back to garage <span aria-hidden="true">→</span></a></footer>
+    </main>
+</body>
+</html>
