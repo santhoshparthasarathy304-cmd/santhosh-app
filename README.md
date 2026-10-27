@@ -41,6 +41,14 @@ deploying to a hosting provider, configure:
 The SQLite database and environment files are intentionally excluded from Git.
 Run `python manage.py migrate` to create a fresh local database.
 
+## Deploy on Render
+
+This repository includes a `render.yaml` blueprint. In Render, choose **New**
+> **Blueprint**, connect this GitHub repository, and deploy. Render generates
+the production secret key and configures HTTPS, static files, and database
+migrations. The free web service uses temporary storage, so leaderboard scores
+may be cleared when the service restarts.
+
 ## Game controls
 
 - Left/right arrows or **A**/**D**: steer
